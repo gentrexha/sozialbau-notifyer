@@ -11,7 +11,7 @@ import pandas as pd
 import datetime
 
 
-def get_player_data(text: str):
+def get_player_data(data, text: str):
     """
     Extracts data as list from the player.text
     :param text:
@@ -19,8 +19,9 @@ def get_player_data(text: str):
     """
     text_list = text.split("\n")
     # get all except last
-    data = text_list[:-1]
+    data.extend(text_list[:-1])
     data.extend(text_list[-1].split(" "))
+    print(data)
     return data
 
 
@@ -50,6 +51,7 @@ def main():
     driver.find_element_by_xpath("//h2[text()='Team Analyst']").click()
 
     # Go to Transferlist
+    # TODO: Find out why the script gets stuck at the dashboard sometimes
     driver.implicitly_wait(10)
     driver.get("https://en.onlinesoccermanager.com/Transferlist")
     assert "Transfer List" in driver.title
@@ -58,16 +60,17 @@ def main():
     positions = transferlist.find_elements(By.TAG_NAME, "tbody")
 
     df = pd.DataFrame(
-        columns=["name", "age", "team", "attack", "def", "overall", "price", "value"]
+        columns=["position", "name", "age", "team", "attack", "def", "overall", "price", "value"]
     )
+    res = dict(zip(['Forward', "Midfielder", "Defender", "Goalkeeper"], positions))
 
-    for position in positions:
+    for key, position in res.items():
         players = position.find_elements(By.TAG_NAME, "tr")
         for player in players:
-
+            player_data = [key]
             table_data = player.find_elements(By.TAG_NAME, "td")
             table_data[0].click()
-            player_data = get_player_data(player.text)
+            player_data = get_player_data(player_data, player.text)
 
             driver.implicitly_wait(3)
             try:

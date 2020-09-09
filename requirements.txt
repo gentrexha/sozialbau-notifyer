@@ -10,3 +10,4 @@ pandas==1.1.2
 gspread
 oauth2client
 gspread-dataframe
+gspread-formatting
