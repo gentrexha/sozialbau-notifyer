@@ -1,11 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 import logging
+import os
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
-import os
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
+import pandas as pd
+import datetime
+
+
+def get_player_data(text: str):
+    """
+    Extracts data as list from the player.text
+    :param text:
+    :return:
+    """
+    text_list = text.split("\n")
+    # get all except last
+    data = text_list[:-1]
+    data.extend(text_list[-1].split(" "))
+    return data
 
 
 def main():
@@ -14,38 +30,68 @@ def main():
     # Accept terms and conditions
     driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
     driver.implicitly_wait(10)
-    driver.find_element_by_class_name('custom-checkbox').click()
-    driver.find_element_by_class_name('btn-new').click()
+    driver.find_element_by_class_name("custom-checkbox").click()
+    driver.find_element_by_class_name("btn-new").click()
 
     # Login
     driver.implicitly_wait(10)
     driver.find_element_by_id("login-link").click()
     driver.implicitly_wait(10)
     try:
-        driver.find_element_by_id("manager-name").send_keys(os.environ['manager-name'])
-        driver.find_element_by_id("password").send_keys(os.environ['password'])
+        driver.find_element_by_id("manager-name").send_keys(os.environ["manager-name"])
+        driver.find_element_by_id("password").send_keys(os.environ["password"])
     except KeyError:
         logger.info("Please put manager-name and password in .env file.")
+        return 0
     driver.find_element_by_id("login").click()
 
     # Choose team
     driver.implicitly_wait(10)
     driver.find_element_by_xpath("//h2[text()='Team Analyst']").click()
 
-    # Go to Transerlist
+    # Go to Transferlist
     driver.implicitly_wait(10)
     driver.get("https://en.onlinesoccermanager.com/Transferlist")
+    assert "Transfer List" in driver.title
     driver.implicitly_wait(10)
-    transferlist = driver.find_element_by_id('transfer-list')
+    transferlist = driver.find_element_by_id("transfer-list")
     positions = transferlist.find_elements(By.TAG_NAME, "tbody")
+
+    df = pd.DataFrame(
+        columns=["name", "age", "team", "attack", "def", "overall", "price", "value"]
+    )
 
     for position in positions:
         players = position.find_elements(By.TAG_NAME, "tr")
         for player in players:
-            # Save name, age, club, att, def, ovr, price
-            print(player.text)
-            # Get id="modal-dialog-buyforeignplayer"
-                # Save nationality, value
+
+            table_data = player.find_elements(By.TAG_NAME, "td")
+            table_data[0].click()
+            player_data = get_player_data(player.text)
+
+            driver.implicitly_wait(3)
+            try:
+                # Player value
+                player_value = driver.find_element_by_xpath(
+                    '//h3[contains(@data-bind,"currency: value, fractionDigits: 1, roundCurrency: '
+                    'isSessionPlayer ? RoundCurrency.Downwards : RoundCurrency.Upwards")]'
+                )
+
+                # TODO: Get Player nationality as well
+
+                # Close button
+                driver.find_element_by_xpath(
+                    '//button[contains(@data-bind,"visible: options().showCloseButton")]'
+                ).click()
+                player_data.append(player_value.text)
+            except NoSuchElementException:
+                print("Could not find value.")
+            finally:
+                s = pd.Series(player_data, index=df.columns)
+                df = df.append(s, ignore_index=True)
+
+    df.to_csv(f"../data/players_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv", index=False)
+    df.to_csv(f"../data/players.csv", index=False)
 
     return 0
 
