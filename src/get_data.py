@@ -7,6 +7,7 @@ from dotenv import find_dotenv, load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from tqdm import tqdm
 import pandas as pd
 import datetime
 
@@ -21,7 +22,6 @@ def get_player_data(data, text: str):
     # get all except last
     data.extend(text_list[:-1])
     data.extend(text_list[-1].split(" "))
-    print(data)
     return data
 
 
@@ -64,9 +64,9 @@ def main():
     )
     res = dict(zip(['Forward', "Midfielder", "Defender", "Goalkeeper"], positions))
 
-    for key, position in res.items():
+    for key, position in tqdm(res.items()):
         players = position.find_elements(By.TAG_NAME, "tr")
-        for player in players:
+        for player in tqdm(players):
             player_data = [key]
             table_data = player.find_elements(By.TAG_NAME, "td")
             table_data[0].click()

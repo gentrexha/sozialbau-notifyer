@@ -10,6 +10,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 
 def main():
+    logger = logging.getLogger(__name__)
+    logger.info("Using credentials to interact with the Google Drive API.")
     # use creds to create a client to interact with the Google Drive API
     scope = [
         "https://spreadsheets.google.com/feeds",
@@ -22,11 +24,12 @@ def main():
 
     df = pd.read_csv("../data/players.csv")
 
-    # Preprocess
+    logger.info("Preprocessing data.")
     preprocess_data(df)
 
     ws = client.open("OSM Transferlist").worksheet("Data")
     set_with_dataframe(ws, df)
+    logger.info("Upload successful.")
     # format_with_dataframe(ws, df, include_column_header=True)
 
     return 0
@@ -38,24 +41,26 @@ def preprocess_data(df):
     cols = ["age", "attack", "def", "overall", "price", "value"]
     df[cols] = df[cols].apply(pd.to_numeric, errors="coerce", axis=1)
 
-    df["main_position_skill"] = df.apply(
+    df["difference"] = df.apply(lambda row: row["price"] - row["value"], axis=1)
+    df["main"] = df.apply(
         lambda row: row["attack"]
         if row["position"] == "Forward"
         else (row["overall"] if row["position"] == "Midfielder" else row["def"]),
         axis=1,
     )
-    df["possible_sell_price"] = df.apply(
+    df["possible sell price"] = df.apply(
         lambda row: row["value"] * 2.5
-        if row["main_position_skill"] < 80 or row["value"] < 9
+        if row["main"] < 80 or row["value"] < 9
         else row["value"] * 1.5,
         axis=1,
     )
-    df["possible_profit"] = df.apply(
+    df["possible profit"] = df.apply(
         lambda row: row["value"] * 2.5 - row["price"]
-        if row["main_position_skill"] < 80 or row["value"] < 9
+        if row["main"] < 80 or row["value"] < 9
         else row["value"] * 1.5 - row["price"],
         axis=1,
     )
+    df.drop(["main"], axis=1, inplace=True)
 
 
 if __name__ == "__main__":
