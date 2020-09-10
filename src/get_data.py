@@ -27,10 +27,11 @@ def get_player_data(data, text: str):
 
 
 def sendMessage(message):
-    users = ["Gent Rexha", "Florim Hamiti"]
+    users = []
     username = os.environ["fb-username"]
     client = fbchat.Client(username, os.environ["fb-password"])
-    for i in range(2):
+    print(len(users))
+    for i in range(len(users)):
         name = users[i]
         friends = client.searchForUsers(name)  # return a list of names
         friend = friends[0]
