@@ -60,9 +60,19 @@ def main():
     positions = transferlist.find_elements(By.TAG_NAME, "tbody")
 
     df = pd.DataFrame(
-        columns=["position", "name", "age", "team", "attack", "def", "overall", "price", "value"]
+        columns=[
+            "position",
+            "name",
+            "age",
+            "team",
+            "attack",
+            "def",
+            "overall",
+            "price",
+            "value",
+        ]
     )
-    res = dict(zip(['Forward', "Midfielder", "Defender", "Goalkeeper"], positions))
+    res = dict(zip(["Forward", "Midfielder", "Defender", "Goalkeeper"], positions))
 
     for key, position in tqdm(res.items()):
         players = position.find_elements(By.TAG_NAME, "tr")
@@ -93,7 +103,10 @@ def main():
                 s = pd.Series(player_data, index=df.columns)
                 df = df.append(s, ignore_index=True)
 
-    df.to_csv(f"../data/players_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv", index=False)
+    df.to_csv(
+        f"../data/players_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv",
+        index=False,
+    )
     df.to_csv(f"../data/players.csv", index=False)
 
     return 0

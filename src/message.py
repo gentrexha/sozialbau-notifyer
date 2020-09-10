@@ -8,24 +8,26 @@ from dotenv import find_dotenv, load_dotenv
 from pathlib import Path
 from update_data import preprocess_data
 import glob
+import requests
 
 
 def main():
     logger = logging.getLogger(__name__)
-    new, top = analyze_data()
-    print(f"New players on the Transferlist: \n {new}")
-    print(f"Top players on the Transferlist: \n {top}")
-    # send_msg(f"New players on the Transferlist: \n {new}")
-    # send_msg(f"Top players on the Transferlist: \n {top}")
+    new, top, last_update = analyze_data()
+    logger.info(send_telegram_msg(f"New players on the Transferlist: \n\n {new}"))
+    logger.info(send_telegram_msg(f"Top players on the Transferlist: \n\n {top}"))
+    logger.info(send_telegram_msg(f"Last update: {last_update[8:-4]}"))
     return 0
 
 
-def find_new_players() -> pd.DataFrame:
+def find_new_players() -> (pd.DataFrame, str):
     df_new = pd.read_csv("../data/players.csv")
+    df_new = preprocess_data(df_new)
     old_players = glob.glob("../data/players_*.csv")
     df_old = pd.read_csv(old_players[-2])
-    df = df_new[~df_new['name'].isin(df_old['name'])]
-    return df
+    df_old = preprocess_data(df_old)
+    df = df_new[~df_new["name"].isin(df_old["name"])]
+    return df, old_players[-1]
 
 
 def find_top_players(top: int = 5) -> pd.DataFrame:
@@ -36,16 +38,27 @@ def find_top_players(top: int = 5) -> pd.DataFrame:
 
 
 def analyze_data():
-    new_players = find_new_players()
+    new_players, last_update = find_new_players()
     top_players = find_top_players()
     return (
-        new_players.to_string(index=False),
-        top_players.to_string(index=False),
+        new_players.to_string(index=False, columns=["name", "age", "rating", "price"]),
+        top_players.to_string(index=False, columns=["name", "age", "rating", "possible profit"]),
+        last_update
     )
 
 
+def send_telegram_msg(bot_message):
+    bot_token = os.environ["bot_token"]
+    bot_chatID = os.environ["bot_chatID"]
+    send_text = f"https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={bot_chatID}&text={bot_message}"
+
+    response = requests.get(send_text)
+
+    return response.json()
+
+
 def send_msg(message):
-    users = [os.environ.get("users").split(",")]
+    users = os.environ.get("users").split(",")
     client = fbchat.Client(os.environ["fb-username"], os.environ["fb-password"])
     for i in range(len(users)):
         name = users[i]

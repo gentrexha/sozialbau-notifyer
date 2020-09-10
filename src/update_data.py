@@ -43,7 +43,7 @@ def preprocess_data(df) -> pd.DataFrame:
     df[cols] = df[cols].apply(pd.to_numeric, errors="coerce", axis=1)
 
     df["difference"] = df.apply(lambda row: row["price"] - row["value"], axis=1)
-    df["main"] = df.apply(
+    df["rating"] = df.apply(
         lambda row: row["attack"]
         if row["position"] == "Forward"
         else (row["overall"] if row["position"] == "Midfielder" else row["def"]),
@@ -51,17 +51,16 @@ def preprocess_data(df) -> pd.DataFrame:
     )
     df["possible sell price"] = df.apply(
         lambda row: row["value"] * 2.5
-        if row["main"] < 80 or row["value"] < 9
+        if row["rating"] < 80 or row["value"] < 9
         else row["value"] * 1.5,
         axis=1,
     )
     df["possible profit"] = df.apply(
         lambda row: row["value"] * 2.5 - row["price"]
-        if row["main"] < 80 or row["value"] < 9
+        if row["rating"] < 80 or row["value"] < 9
         else row["value"] * 1.5 - row["price"],
         axis=1,
     )
-    df.drop(["main"], axis=1, inplace=True)
     return df
 
 
