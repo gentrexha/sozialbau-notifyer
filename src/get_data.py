@@ -10,7 +10,6 @@ from selenium.common.exceptions import NoSuchElementException
 from tqdm import tqdm
 import pandas as pd
 import datetime
-import fbchat
 
 
 def get_player_data(data, text: str):
@@ -26,23 +25,9 @@ def get_player_data(data, text: str):
     return data
 
 
-def sendMessage(message):
-    users = []
-    username = os.environ["fb-username"]
-    client = fbchat.Client(username, os.environ["fb-password"])
-    print(len(users))
-    for i in range(len(users)):
-        name = users[i]
-        friends = client.searchForUsers(name)  # return a list of names
-        friend = friends[0]
-        sent = client.sendMessage(message, thread_id=friend.uid)
-        if sent:
-            print("Message sent successfully!")
-
-
 def main():
     logger = logging.getLogger(__name__)
-    driver = webdriver.Chrome(executable_path='chromedriver_linux64')
+    driver = webdriver.Chrome(executable_path=f"{os.environ['driver']}")
     # Accept terms and conditions
     driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
     driver.implicitly_wait(10)
@@ -127,6 +112,3 @@ if __name__ == "__main__":
     load_dotenv(find_dotenv())
 
     main()
-
-    # For sending messages via facebook messenger
-    # sendMessage("Testing")

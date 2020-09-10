@@ -5,6 +5,7 @@ import pandas as pd
 import gspread as gc
 from pathlib import Path
 from gspread_dataframe import set_with_dataframe
+from dotenv import find_dotenv, load_dotenv
 from gspread_formatting.dataframe import format_with_dataframe
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -25,7 +26,7 @@ def main():
     df = pd.read_csv("../data/players.csv")
 
     logger.info("Preprocessing data.")
-    preprocess_data(df)
+    df = preprocess_data(df)
 
     ws = client.open("OSM Transferlist").worksheet("Data")
     set_with_dataframe(ws, df)
@@ -35,7 +36,7 @@ def main():
     return 0
 
 
-def preprocess_data(df):
+def preprocess_data(df) -> pd.DataFrame:
     df["price"] = df["price"].apply(lambda x: x[:-1])
     df["value"] = df["value"].apply(lambda x: x[:-1])
     cols = ["age", "attack", "def", "overall", "price", "value"]
@@ -61,6 +62,7 @@ def preprocess_data(df):
         axis=1,
     )
     df.drop(["main"], axis=1, inplace=True)
+    return df
 
 
 if __name__ == "__main__":
@@ -69,5 +71,9 @@ if __name__ == "__main__":
 
     # not used in this stub but often useful for finding various files
     project_dir = Path(__file__).resolve().parents[1]
+
+    # find .env automagically by walking up directories until it's found, then
+    # load up the .env entries as environment variables
+    load_dotenv(find_dotenv())
 
     main()

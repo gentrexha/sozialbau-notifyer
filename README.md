@@ -8,12 +8,17 @@ Also have a `.env` file inside the project folder that looks like this:
 ````
 manager-name=
 password=
+fb-username=
+fb-password=
+driver=
 ````
 
-Execute the command
+Execute the commands
 
 ```
-python ./src/main.py
+python ./src/get_data.py
+python ./src/update_data.py
+python ./src/message.py
 ```
 
 , and you'll end up with the a `players.csv`
