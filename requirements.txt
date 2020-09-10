@@ -7,8 +7,9 @@ pathlib2
 # project requirements
 selenium==3.141.0
 pandas==1.1.2
-gspread
-oauth2client
+gspread~=3.6.0
+oauth2client~=4.1.3
 gspread-dataframe
 gspread-formatting
-tqdm
+tqdm~=4.48.2
+fbchat~=1.9.7
