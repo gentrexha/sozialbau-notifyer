@@ -90,5 +90,6 @@ target/
 # Secret
 *.json
 
-# exe
+# executables
 *.exe
+*.bat
