@@ -13,9 +13,10 @@ import requests
 def main():
     logger = logging.getLogger(__name__)
     new, top, last_update = analyze_data()
-    logger.info(send_telegram_msg(f"New players on the Transferlist: \n\n {new}"))
-    logger.info(send_telegram_msg(f"Top players on the Transferlist: \n\n {top}"))
-    logger.info(send_telegram_msg(f"Last update: {last_update}"))
+    send_telegram_msg(f"New players on the Transferlist: \n\n {new}")
+    send_telegram_msg(f"Top players on the Transferlist: \n\n {top}")
+    send_telegram_msg(f"Last update: {last_update}")
+    logger.info("Sent messages!")
     return 0
 
 

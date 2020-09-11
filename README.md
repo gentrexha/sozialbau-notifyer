@@ -13,7 +13,14 @@ bot_token=
 bot_chatID=
 ````
 
-After that just execute `run_analyzer.bat`
+After that just execute 
+
+```bash
+python src/get_data.py
+python src/update_data.py
+python src/message.py
+pause
+```
 
 ## TODO
 
