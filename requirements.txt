@@ -8,9 +8,8 @@ pathlib2
 selenium==3.141.0
 pandas==1.1.2
 gspread~=3.6.0
-oauth2client~=4.1.3
 gspread-dataframe
-gspread-formatting
+oauth2client~=4.1.3
 tqdm~=4.48.2
-fbchat~=1.9.7
+colorama==0.4.3
 requests==2.24.0

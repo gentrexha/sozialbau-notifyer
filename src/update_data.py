@@ -6,7 +6,6 @@ import gspread as gc
 from pathlib import Path
 from gspread_dataframe import set_with_dataframe
 from dotenv import find_dotenv, load_dotenv
-from gspread_formatting.dataframe import format_with_dataframe
 from oauth2client.service_account import ServiceAccountCredentials
 
 
@@ -49,13 +48,13 @@ def preprocess_data(df) -> pd.DataFrame:
         else (row["overall"] if row["position"] == "Midfielder" else row["def"]),
         axis=1,
     )
-    df["possible sell price"] = df.apply(
+    df["sell"] = df.apply(
         lambda row: row["value"] * 2.5
         if row["rating"] < 80 or row["value"] < 9
         else row["value"] * 1.5,
         axis=1,
     )
-    df["possible profit"] = df.apply(
+    df["profit"] = df.apply(
         lambda row: row["value"] * 2.5 - row["price"]
         if row["rating"] < 80 or row["value"] < 9
         else row["value"] * 1.5 - row["price"],

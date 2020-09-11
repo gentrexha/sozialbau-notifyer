@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import fbchat
 import logging
 import os
 import pandas as pd
@@ -27,13 +26,14 @@ def find_new_players() -> (pd.DataFrame, str):
     df_old = pd.read_csv(old_players[-2])
     df_old = preprocess_data(df_old)
     df = df_new[~df_new["name"].isin(df_old["name"])]
+    df = df.sort_values(["rating"], ascending=False)
     return df, old_players[-1]
 
 
 def find_top_players(top: int = 5) -> pd.DataFrame:
     df = pd.read_csv("../data/players.csv")
     df = preprocess_data(df)
-    df.sort_values(["possible profit"], inplace=True, ascending=False)
+    df.sort_values(["profit"], inplace=True, ascending=False)
     return df.head(top)
 
 
@@ -41,9 +41,13 @@ def analyze_data():
     new_players, last_update = find_new_players()
     top_players = find_top_players()
     return (
-        new_players.to_string(index=False, columns=["name", "age", "rating", "price"]),
-        top_players.to_string(index=False, columns=["name", "age", "rating", "possible profit"]),
-        last_update
+        new_players.to_string(
+            index=False, columns=["name", "age", "rating", "price"], justify="right"
+        ),
+        top_players.to_string(
+            index=False, columns=["name", "age", "rating", "profit"], justify="right"
+        ),
+        last_update,
     )
 
 
@@ -55,18 +59,6 @@ def send_telegram_msg(bot_message):
     response = requests.get(send_text)
 
     return response.json()
-
-
-def send_msg(message):
-    users = os.environ.get("users").split(",")
-    client = fbchat.Client(os.environ["fb-username"], os.environ["fb-password"])
-    for i in range(len(users)):
-        name = users[i]
-        friends = client.searchForUsers(name)  # return a list of names
-        friend = friends[0]
-        sent = client.sendMessage(message, thread_id=friend.uid)
-        if sent:
-            print("Message sent successfully!")
 
 
 if __name__ == "__main__":

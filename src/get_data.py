@@ -15,6 +15,7 @@ import datetime
 def get_player_data(data, text: str):
     """
     Extracts data as list from the player.text
+    :param data:
     :param text:
     :return:
     """
@@ -82,7 +83,7 @@ def main():
             table_data[0].click()
             player_data = get_player_data(player_data, player.text)
 
-            driver.implicitly_wait(3)
+            driver.implicitly_wait(10)
             try:
                 # Player value
                 player_value = driver.find_element_by_xpath(
