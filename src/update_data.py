@@ -22,7 +22,7 @@ def main():
     )
     client = gc.authorize(creds)
 
-    df = pd.read_csv("../data/players.csv")
+    df = pd.read_csv(project_dir / "data/players.csv")
 
     logger.info("Preprocessing data.")
     df = preprocess_data(df)

@@ -20,9 +20,9 @@ def main():
 
 
 def find_new_players() -> (pd.DataFrame, str):
-    df_new = pd.read_csv("../data/players.csv")
+    df_new = pd.read_csv(project_dir / "data/players.csv")
     df_new = preprocess_data(df_new)
-    old_players = glob.glob("../data/players_*.csv")
+    old_players = glob.glob(project_dir / "data/players_*.csv")
     df_old = pd.read_csv(old_players[-2])
     df_old = preprocess_data(df_old)
     df = df_new[~df_new["name"].isin(df_old["name"])]
@@ -31,7 +31,7 @@ def find_new_players() -> (pd.DataFrame, str):
 
 
 def find_top_players(top: int = 5) -> pd.DataFrame:
-    df = pd.read_csv("../data/players.csv")
+    df = pd.read_csv(project_dir / "data/players.csv")
     df = preprocess_data(df)
     df.sort_values(["profit"], inplace=True, ascending=False)
     return df.head(top)
@@ -55,9 +55,7 @@ def send_telegram_msg(bot_message):
     bot_token = os.environ["bot_token"]
     bot_chatID = os.environ["bot_chatID"]
     send_text = f"https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={bot_chatID}&text={bot_message}"
-
     response = requests.get(send_text)
-
     return response.json()
 
 

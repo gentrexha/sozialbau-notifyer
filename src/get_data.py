@@ -29,6 +29,7 @@ def get_player_data(data, text: str):
 def main():
     logger = logging.getLogger(__name__)
     driver = webdriver.Chrome(executable_path=f"{os.environ['driver']}")
+    logger.info("Logging into manager.")
     # Accept terms and conditions
     driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
     driver.implicitly_wait(10)
@@ -55,10 +56,15 @@ def main():
     # TODO: Find out why the script gets stuck at the dashboard sometimes
     driver.implicitly_wait(10)
     driver.get("https://en.onlinesoccermanager.com/Transferlist")
-    assert "Transfer List" in driver.title
+    try:
+        assert "Transfer List" in driver.title
+    except AssertionError:
+        driver.get("https://en.onlinesoccermanager.com/Transferlist")
     driver.implicitly_wait(10)
     transferlist = driver.find_element_by_id("transfer-list")
     positions = transferlist.find_elements(By.TAG_NAME, "tbody")
+
+    logger.info("Started scraping transfer list data.")
 
     df = pd.DataFrame(
         columns=[
@@ -75,9 +81,9 @@ def main():
     )
     res = dict(zip(["Forward", "Midfielder", "Defender", "Goalkeeper"], positions))
 
-    for key, position in tqdm(res.items()):
+    for key, position in tqdm(res.items(), ascii=True):
         players = position.find_elements(By.TAG_NAME, "tr")
-        for player in tqdm(players):
+        for player in tqdm(players, ascii=True):
             player_data = [key]
             table_data = player.find_elements(By.TAG_NAME, "td")
             table_data[0].click()
@@ -104,11 +110,12 @@ def main():
                 s = pd.Series(player_data, index=df.columns)
                 df = df.append(s, ignore_index=True)
 
+    logger.info("Finished scraping data. Saving results.")
     df.to_csv(
-        f"../data/players_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv",
+        project_dir / f"data/players_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv",
         index=False,
     )
-    df.to_csv(f"../data/players.csv", index=False)
+    df.to_csv(project_dir / "data/players.csv", index=False)
 
     return 0
 
