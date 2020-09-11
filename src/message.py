@@ -15,19 +15,19 @@ def main():
     new, top, last_update = analyze_data()
     logger.info(send_telegram_msg(f"New players on the Transferlist: \n\n {new}"))
     logger.info(send_telegram_msg(f"Top players on the Transferlist: \n\n {top}"))
-    logger.info(send_telegram_msg(f"Last update: {last_update[8:-4]}"))
+    logger.info(send_telegram_msg(f"Last update: {last_update}"))
     return 0
 
 
 def find_new_players() -> (pd.DataFrame, str):
     df_new = pd.read_csv(project_dir / "data/players.csv")
     df_new = preprocess_data(df_new)
-    old_players = glob.glob(project_dir / "data/players_*.csv")
+    old_players = glob.glob(project_dir.resolve().__str__() + "/data/players_*.csv")
     df_old = pd.read_csv(old_players[-2])
     df_old = preprocess_data(df_old)
     df = df_new[~df_new["name"].isin(df_old["name"])]
     df = df.sort_values(["rating"], ascending=False)
-    return df, old_players[-1]
+    return df, old_players[-1][-19:-4]
 
 
 def find_top_players(top: int = 5) -> pd.DataFrame:
@@ -45,7 +45,7 @@ def analyze_data():
             index=False, columns=["name", "age", "rating", "price"], justify="right"
         ),
         top_players.to_string(
-            index=False, columns=["name", "age", "rating", "profit"], justify="right"
+            index=False, columns=["name", "age", "rating", "price", "profit"], justify="right"
         ),
         last_update,
     )
