@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from tqdm import tqdm
 import pandas as pd
 import datetime
@@ -49,8 +49,14 @@ def main():
     driver.find_element_by_id("login").click()
 
     # Choose team
-    driver.implicitly_wait(10)
-    driver.find_element_by_xpath("//h2[text()='Team Analyst']").click()
+    try:
+        driver.implicitly_wait(10)
+        driver.find_element_by_xpath("//h2[text()='Team Analyst']").click()
+    except:
+        driver.implicitly_wait(10)
+        driver.find_element_by_xpath("//span[text()='Continue']").click()
+        driver.implicitly_wait(10)
+        driver.find_element_by_xpath("//h2[text()='Team Analyst']").click()
 
     # Go to Transferlist
     # TODO: Find out why the script gets stuck at the dashboard sometimes
