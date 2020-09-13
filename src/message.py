@@ -24,6 +24,7 @@ def find_new_players() -> (pd.DataFrame, str):
     df_new = pd.read_csv(project_dir / "data/players.csv")
     df_new = preprocess_data(df_new)
     old_players = glob.glob(project_dir.resolve().__str__() + "/data/players_*.csv")
+    old_players.sort()
     df_old = pd.read_csv(old_players[-2])
     df_old = preprocess_data(df_old)
     df = df_new[~df_new["name"].isin(df_old["name"])]
