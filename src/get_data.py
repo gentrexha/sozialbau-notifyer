@@ -6,7 +6,8 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from tqdm import tqdm
 import pandas as pd
@@ -29,7 +30,12 @@ def get_player_data(data, text: str):
 
 def main():
     logger = logging.getLogger(__name__)
-    driver = webdriver.Chrome(executable_path=f"{os.environ['driver']}")
+    options = Options()
+    # options.add_argument('--headless')
+    # options.add_argument('--no-sandbox')
+    # options.add_argument('--disable-dev-shm-usage')
+    # options.binary_location = f"{os.environ['driver']}"
+    driver = webdriver.Chrome()
     logger.info("Logging into manager.")
     # Accept terms and conditions
     driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
