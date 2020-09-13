@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/bin/python
 # -*- coding: utf-8 -*-
 import logging
 import os
