@@ -36,8 +36,12 @@ def main():
 
 
 def preprocess_data(df) -> pd.DataFrame:
+    df["price"] = df["price"].fillna("0.0M")
+    df["value"] = df["value"].fillna("0.0M")
+
     df["price"] = df["price"].apply(lambda x: x[:-1])
     df["value"] = df["value"].apply(lambda x: x[:-1])
+
     cols = ["age", "attack", "def", "overall", "price", "value"]
     df[cols] = df[cols].apply(pd.to_numeric, errors="coerce", axis=1)
 

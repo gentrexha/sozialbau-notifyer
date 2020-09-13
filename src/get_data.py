@@ -7,6 +7,7 @@ from dotenv import find_dotenv, load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+from selenium.webdriver.common.action_chains import ActionChains
 from tqdm import tqdm
 import pandas as pd
 import datetime
@@ -92,6 +93,8 @@ def main():
         for player in tqdm(players, ascii=True):
             player_data = [key]
             table_data = player.find_elements(By.TAG_NAME, "td")
+            # scroll down to player
+            ActionChains(driver).move_to_element(table_data[0]).perform()
             table_data[0].click()
             player_data = get_player_data(player_data, player.text)
 
