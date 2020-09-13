@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from tqdm import tqdm
@@ -58,7 +58,7 @@ def main():
     try:
         driver.implicitly_wait(10)
         driver.find_element_by_xpath("//h2[text()='Team Analyst']").click()
-    except:
+    except ElementClickInterceptedException:
         driver.implicitly_wait(10)
         driver.find_element_by_xpath("//span[text()='Continue']").click()
         driver.implicitly_wait(10)
