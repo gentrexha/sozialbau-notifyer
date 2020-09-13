@@ -31,11 +31,10 @@ def get_player_data(data, text: str):
 def main():
     logger = logging.getLogger(__name__)
     options = Options()
-    # options.add_argument('--headless')
-    # options.add_argument('--no-sandbox')
-    # options.add_argument('--disable-dev-shm-usage')
-    # options.binary_location = f"{os.environ['driver']}"
-    driver = webdriver.Chrome()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(options=options)
     logger.info("Logging into manager.")
     # Accept terms and conditions
     driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
@@ -102,7 +101,10 @@ def main():
             # scroll down to player
             ActionChains(driver).move_to_element(table_data[0]).perform()
             table_data[0].click()
-            player_data = get_player_data(player_data, player.text)
+            if player.text != "":
+                player_data = get_player_data(player_data, player.text)
+            else:
+                logger.info("Could not get player data!")
 
             driver.implicitly_wait(10)
             try:
