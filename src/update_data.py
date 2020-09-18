@@ -52,10 +52,14 @@ def preprocess_data(df) -> pd.DataFrame:
         else (row["overall"] if row["position"] == "Midfielder" else row["def"]),
         axis=1,
     )
-    df["sell"] = df.apply(
-        lambda row: row["value"] * 2.5
-        if row["rating"] < 80 or row["value"] < 9
-        else row["value"] * 1.5,
+    # df["sell"] = df.apply(
+    #     lambda row: row["value"] * 2.5
+    #     if row["rating"] < 80 or row["value"] < 9
+    #     else row["value"] * 1.5,
+    #     axis=1,
+    # )
+    df["sell"] = df.apply(  # TODO: Remove after event
+        lambda row: row["value"] * 2.5,
         axis=1,
     )
     # df["profit"] = df.apply(
@@ -64,7 +68,7 @@ def preprocess_data(df) -> pd.DataFrame:
     #     else row["value"] * 1.5 - row["price"],
     #     axis=1,
     # )
-    df["profit"] = df.apply(
+    df["profit"] = df.apply(  # TODO: Remove after event
         lambda row: row["value"] * 2.5 - row["price"],
         axis=1,
     )
