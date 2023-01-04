@@ -93,3 +93,6 @@ target/
 # executables
 *.exe
 *.bat
+
+# data
+/data/*

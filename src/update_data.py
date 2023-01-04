@@ -48,8 +48,8 @@ def preprocess_data(df) -> pd.DataFrame:
     df["difference"] = df.apply(lambda row: row["price"] - row["value"], axis=1)
     df["rating"] = df.apply(
         lambda row: row["attack"]
-        if row["position"] == "Forward"
-        else (row["overall"] if row["position"] == "Midfielder" else row["def"]),
+        if row["type"] == "Forward"
+        else (row["overall"] if row["type"] == "Midfielder" else row["def"]),
         axis=1,
     )
     df["sell"] = df.apply(

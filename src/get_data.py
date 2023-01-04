@@ -22,8 +22,15 @@ def get_player_data(data, text: str):
     :return:
     """
     text_list = text.split("\n")
-    # get all except last
-    data.extend(text_list[:-1])
+    # name pos age
+    # data.extend(text_list[0].split(" "))
+    # name
+    data.append(" ".join(text_list[0].split(" ")[:-2]))
+    # pos age
+    data.extend(text_list[0].split(" ")[-2:])
+    # team
+    data.append(text_list[1])
+    # values
     data.extend(text_list[-1].split(" "))
     return data
 
@@ -31,21 +38,22 @@ def get_player_data(data, text: str):
 def main():
     logger = logging.getLogger(__name__)
     options = Options()
-    options.add_argument('--headless')
+    # options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(options=options)
     logger.info("Logging into manager.")
     # Accept terms and conditions
     driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
-    driver.implicitly_wait(10)
-    driver.find_element_by_class_name("custom-checkbox").click()
+    driver.implicitly_wait(20)
+    # driver.find_element_by_class_name("custom-checkbox").click()
     driver.find_element_by_class_name("btn-new").click()
 
     # Login
-    driver.implicitly_wait(10)
-    driver.find_element_by_id("login-link").click()
-    driver.implicitly_wait(10)
+    driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
+    driver.implicitly_wait(20)
+    # driver.find_element_by_id("login-link").click()
+    # driver.implicitly_wait(10)
     try:
         driver.find_element_by_id("manager-name").send_keys(os.environ["manager-name"])
         driver.find_element_by_id("password").send_keys(os.environ["password"])
@@ -56,23 +64,23 @@ def main():
 
     # Choose team
     try:
-        driver.implicitly_wait(10)
-        driver.find_element_by_xpath("//h2[text()='Team Analyst']").click()
+        driver.implicitly_wait(30)
+        driver.find_element_by_xpath("//h2[text()='FC Barileva']").click()
     except ElementClickInterceptedException:
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(30)
         driver.find_element_by_xpath("//span[text()='Continue']").click()
-        driver.implicitly_wait(10)
-        driver.find_element_by_xpath("//h2[text()='Team Analyst']").click()
+        driver.implicitly_wait(30)
+        driver.find_element_by_xpath("//h2[text()='FC Barileva']").click()
 
     # Go to Transferlist
     # TODO: Find out why the script gets stuck at the dashboard sometimes
-    driver.implicitly_wait(10)
+    driver.implicitly_wait(20)
     driver.get("https://en.onlinesoccermanager.com/Transferlist")
     try:
         assert "Transfer List" in driver.title
     except AssertionError:
         driver.get("https://en.onlinesoccermanager.com/Transferlist")
-    driver.implicitly_wait(10)
+    driver.implicitly_wait(20)
     transferlist = driver.find_element_by_id("transfer-list")
     positions = transferlist.find_elements(By.TAG_NAME, "tbody")
 
@@ -80,8 +88,9 @@ def main():
 
     df = pd.DataFrame(
         columns=[
-            "position",
+            "type",
             "name",
+            "position",
             "age",
             "team",
             "attack",
@@ -106,11 +115,11 @@ def main():
             else:
                 logger.info("Could not get player data!")
 
-            driver.implicitly_wait(10)
+            driver.implicitly_wait(20)
             try:
                 # Player value
                 player_value = driver.find_element_by_xpath(
-                    '//h3[contains(@data-bind,"currency: value, fractionDigits: 1, roundCurrency: '
+                    '//span[contains(@data-bind,"currency: value, fractionDigits: 1, roundCurrency: '
                     'isSessionPlayer ? RoundCurrency.Downwards : RoundCurrency.Upwards")]'
                 )
 
@@ -118,7 +127,7 @@ def main():
 
                 # Close button
                 driver.find_element_by_xpath(
-                    '//button[contains(@data-bind,"visible: options().showCloseButton")]'
+                    '//button[contains(@data-bind,"visible: options().showCloseButton, click: closeButtonClicked")]'
                 ).click()
                 player_data.append(player_value.text)
             except NoSuchElementException:
