@@ -22,8 +22,6 @@ def get_player_data(data, text: str):
     :return:
     """
     text_list = text.split("\n")
-    # name pos age
-    # data.extend(text_list[0].split(" "))
     # name
     data.append(" ".join(text_list[0].split(" ")[:-2]))
     # pos age
@@ -38,7 +36,7 @@ def get_player_data(data, text: str):
 def main():
     logger = logging.getLogger(__name__)
     options = Options()
-    # options.add_argument('--headless')
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(options=options)
@@ -46,14 +44,12 @@ def main():
     # Accept terms and conditions
     driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
     driver.implicitly_wait(20)
-    # driver.find_element_by_class_name("custom-checkbox").click()
     driver.find_element_by_class_name("btn-new").click()
 
     # Login
     driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
     driver.implicitly_wait(20)
-    # driver.find_element_by_id("login-link").click()
-    # driver.implicitly_wait(10)
+
     try:
         driver.find_element_by_id("manager-name").send_keys(os.environ["manager-name"])
         driver.find_element_by_id("password").send_keys(os.environ["password"])
@@ -65,12 +61,12 @@ def main():
     # Choose team
     try:
         driver.implicitly_wait(30)
-        driver.find_element_by_xpath("//h2[text()='FC Barileva']").click()
+        driver.find_element_by_xpath("//h2[text()='Barileva Juniors']").click()
     except ElementClickInterceptedException:
         driver.implicitly_wait(30)
         driver.find_element_by_xpath("//span[text()='Continue']").click()
         driver.implicitly_wait(30)
-        driver.find_element_by_xpath("//h2[text()='FC Barileva']").click()
+        driver.find_element_by_xpath("//h2[text()='Barileva Juniors']").click()
 
     # Go to Transferlist
     # TODO: Find out why the script gets stuck at the dashboard sometimes
@@ -118,7 +114,7 @@ def main():
             driver.implicitly_wait(20)
             try:
                 # Player value
-                player_value = driver.find_element_by_xpath(
+                player_value = driver.find_elements_by_xpath(
                     '//span[contains(@data-bind,"currency: value, fractionDigits: 1, roundCurrency: '
                     'isSessionPlayer ? RoundCurrency.Downwards : RoundCurrency.Upwards")]'
                 )
@@ -129,7 +125,7 @@ def main():
                 driver.find_element_by_xpath(
                     '//button[contains(@data-bind,"visible: options().showCloseButton, click: closeButtonClicked")]'
                 ).click()
-                player_data.append(player_value.text)
+                player_data.append(player_value[-1].text)
             except NoSuchElementException:
                 print("Could not find value.")
             finally:
