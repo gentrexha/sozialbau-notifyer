@@ -5,52 +5,40 @@ import os
 import pandas as pd
 from dotenv import find_dotenv, load_dotenv
 from pathlib import Path
-from update_data import preprocess_data
 import glob
 import requests
 
 
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+pd.set_option('display.max_colwidth', None)
+
+
 def main():
     logger = logging.getLogger(__name__)
-    new, top, last_update = analyze_data()
-    send_telegram_msg(f"New players on the Transferlist: \n\n {new}")
-    send_telegram_msg(f"Top players on the Transferlist: \n\n {top}")
-    send_telegram_msg(f"Last update: {last_update}")
+    new, last_update = find_new_flats()
+
+    if not new.empty:
+        for _, row in new.iterrows():
+            # Construct a message by including only selected columns
+            flat_details = "\n".join([f"{col}: {row[col]}" for col in new.columns if
+                                      col not in ['Lage URL', 'Location URL']])
+            send_telegram_msg(f"New flat on Sozialbau.at:\n\n{flat_details}")
+        # Send a message with the last update time
+        send_telegram_msg(f"Last update: {last_update}")
+
     logger.info("Sent messages!")
     return 0
 
 
-def find_new_players() -> (pd.DataFrame, str):
-    df_new = pd.read_csv(project_dir / "data/players.csv")
-    df_new = preprocess_data(df_new)
-    old_players = glob.glob(project_dir.resolve().__str__() + "/data/players_*.csv")
-    old_players.sort()
+def find_new_flats() -> (pd.DataFrame, str):
+    df_new = pd.read_csv(project_dir / "data/flats.csv")
+    old_players = glob.glob(project_dir.resolve().__str__() + "/data/flats_*.csv")
+    # get second last file to compare with last file
     df_old = pd.read_csv(old_players[-2])
-    df_old = preprocess_data(df_old)
-    df = df_new[~df_new["name"].isin(df_old["name"])]
-    df = df.sort_values(["rating"], ascending=False)
+    df = df_new[~df_new["Adresse"].isin(df_old["Adresse"])]
     return df, old_players[-1][-19:-4]
-
-
-def find_top_players(top: int = 5) -> pd.DataFrame:
-    df = pd.read_csv(project_dir / "data/players.csv")
-    df = preprocess_data(df)
-    df.sort_values(["profit"], inplace=True, ascending=False)
-    return df.head(top)
-
-
-def analyze_data():
-    new_players, last_update = find_new_players()
-    top_players = find_top_players()
-    return (
-        new_players.to_string(
-            index=False, columns=["name", "age", "rating", "price"], justify="right"
-        ),
-        top_players.to_string(
-            index=False, columns=["name", "age", "rating", "price", "profit"], justify="right"
-        ),
-        last_update,
-    )
 
 
 def send_telegram_msg(bot_message):

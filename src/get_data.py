@@ -1,36 +1,38 @@
 #!/bin/python
 # -*- coding: utf-8 -*-
 import logging
-import os
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
-from tqdm import tqdm
 import pandas as pd
 import datetime
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
-def get_player_data(data, text: str):
+def extract_table_data(rows):
     """
-    Extracts data as list from the player.text
-    :param data:
-    :param text:
-    :return:
+    Extracts data from table rows and columns.
+    :param rows: Placeholder.
+    :return: DataFrame containing the extracted data.
     """
-    text_list = text.split("\n")
-    # name
-    data.append(" ".join(text_list[0].split(" ")[:-2]))
-    # pos age
-    data.extend(text_list[0].split(" ")[-2:])
-    # team
-    data.append(text_list[1])
-    # values
-    data.extend(text_list[-1].split(" "))
-    return data
+    data = []
+    for row in rows:
+        # For each row, find all cells
+        cells = row.find_elements(By.TAG_NAME, "td")
+        row_data = [cell.text for cell in cells]
+        adresse_href = [cell.find_element(By.TAG_NAME, "a").get_attribute('href') for
+                        cell in cells[:1] if cell.find_elements(By.TAG_NAME, "a")]
+        lage_href = [cell.find_element(By.TAG_NAME, "a").get_attribute('href') for cell
+                     in cells[-1:] if cell.find_elements(By.TAG_NAME, "a")]
+        data.append(row_data + adresse_href + lage_href)
+
+    return pd.DataFrame(data, columns=["Adresse", "Zimmer", "Eigenmittel",
+                                       "Monatliche Kosten", "Lage URL", "Page URL",
+                                       "Location URL"])
 
 
 def main():
@@ -40,110 +42,32 @@ def main():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(options=options)
-    logger.info("Logging into manager.")
-    # Accept terms and conditions
-    driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
-    driver.implicitly_wait(20)
-    driver.find_element_by_class_name("btn-new").click()
 
-    # Login
-    driver.get("https://en.onlinesoccermanager.com/Login?nextUrl=%2FCareer")
-    driver.implicitly_wait(20)
+    logger.info("Opening Sozialbau AG > Sofort Verfuegbar.")
+    driver.get("https://www.sozialbau.at/angebot/sofort-verfuegbar")
 
-    try:
-        driver.find_element_by_id("manager-name").send_keys(os.environ["manager-name"])
-        driver.find_element_by_id("password").send_keys(os.environ["password"])
-    except KeyError:
-        logger.info("Please put manager-name and password in .env file.")
-        return 0
-    driver.find_element_by_id("login").click()
-
-    # Choose team
-    try:
-        driver.implicitly_wait(30)
-        driver.find_element_by_xpath("//h2[text()='Barileva Juniors']").click()
-    except ElementClickInterceptedException:
-        driver.implicitly_wait(30)
-        driver.find_element_by_xpath("//span[text()='Continue']").click()
-        driver.implicitly_wait(30)
-        driver.find_element_by_xpath("//h2[text()='Barileva Juniors']").click()
-
-    # Go to Transferlist
-    # TODO: Find out why the script gets stuck at the dashboard sometimes
-    driver.implicitly_wait(20)
-    driver.get("https://en.onlinesoccermanager.com/Transferlist")
-    try:
-        assert "Transfer List" in driver.title
-    except AssertionError:
-        driver.get("https://en.onlinesoccermanager.com/Transferlist")
-    driver.implicitly_wait(20)
-    transferlist = driver.find_element_by_id("transfer-list")
-    positions = transferlist.find_elements(By.TAG_NAME, "tbody")
-
-    logger.info("Started scraping transfer list data.")
-
-    df = pd.DataFrame(
-        columns=[
-            "type",
-            "name",
-            "position",
-            "age",
-            "team",
-            "attack",
-            "def",
-            "overall",
-            "price",
-            "value",
-        ]
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "c115"))
     )
-    res = dict(zip(["Forward", "Midfielder", "Defender", "Goalkeeper"], positions))
 
-    for key, position in tqdm(res.items(), ascii=True):
-        players = position.find_elements(By.TAG_NAME, "tr")
-        for player in tqdm(players, ascii=True):
-            player_data = [key]
-            table_data = player.find_elements(By.TAG_NAME, "td")
-            # scroll down to player
-            ActionChains(driver).move_to_element(table_data[0]).perform()
-            table_data[0].click()
-            if player.text != "":
-                player_data = get_player_data(player_data, player.text)
-            else:
-                logger.info("Could not get player data!")
+    container_element = driver.find_element(By.ID, "c115")
+    tbody = container_element.find_element(By.TAG_NAME, "tbody")
+    rows = tbody.find_elements(By.TAG_NAME, "tr")
 
-            driver.implicitly_wait(20)
-            try:
-                # Player value
-                player_value = driver.find_elements_by_xpath(
-                    '//span[contains(@data-bind,"currency: value, fractionDigits: 1, roundCurrency: '
-                    'isSessionPlayer ? RoundCurrency.Downwards : RoundCurrency.Upwards")]'
-                )
+    # Extract data from the table
+    df = extract_table_data(rows)
 
-                # TODO: Get Player nationality as well
-
-                # Close button
-                driver.find_element_by_xpath(
-                    '//button[contains(@data-bind,"visible: options().showCloseButton, click: closeButtonClicked")]'
-                ).click()
-                player_data.append(player_value[-1].text)
-            except NoSuchElementException:
-                print("Could not find value.")
-            finally:
-                s = pd.Series(player_data, index=df.columns)
-                df = df.append(s, ignore_index=True)
-
-    logger.info("Finished scraping data. Saving results.")
+    logger.info("Data extraction complete. Saving to CSV.")
     df.to_csv(
-        project_dir / f"data/players_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv",
+        project_dir / f"data/flats_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv",
         index=False,
     )
-    df.to_csv(project_dir / "data/players.csv", index=False)
+    df.to_csv(project_dir / "data/flats.csv", index=False)
     driver.close()
     return 0
 
 
 if __name__ == "__main__":
-
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
 
